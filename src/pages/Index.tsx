@@ -1,12 +1,30 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Shield, Bell, TrendingUp, Calculator } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 const Index = () => {
   const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-card">
+      {/* Navigation */}
+      <nav className="border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <Link to="/" className="text-xl font-bold text-primary flex items-center gap-2">
+            <Shield className="w-6 h-6" />
+            Policy Guardian
+          </Link>
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" asChild>
+              <Link to="/setup">Get Started</Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link to="/dashboard">Dashboard</Link>
+            </Button>
+          </div>
+        </div>
+      </nav>
+
       {/* Hero Section */}
       <section className="container mx-auto px-4 pt-20 pb-16">
         <div className="max-w-4xl mx-auto text-center space-y-6">

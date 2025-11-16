@@ -6,8 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ArrowRight, Building2, HelpCircle, Sparkles } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { ArrowRight, Building2, HelpCircle, Sparkles, Shield } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
 const Setup = () => {
@@ -58,7 +58,25 @@ const Setup = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-card py-12">
-      <div className="container mx-auto px-4 max-w-2xl">
+      {/* Navigation */}
+      <nav className="border-b border-border bg-background/80 backdrop-blur-sm fixed top-0 left-0 right-0 z-50">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <Link to="/" className="text-xl font-bold text-primary flex items-center gap-2">
+            <Shield className="w-6 h-6" />
+            Policy Guardian
+          </Link>
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" asChild>
+              <Link to="/">Home</Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link to="/dashboard">Dashboard</Link>
+            </Button>
+          </div>
+        </div>
+      </nav>
+
+      <div className="container mx-auto px-4 max-w-2xl pt-20">
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-4">
             <Building2 className="w-4 h-4" />
