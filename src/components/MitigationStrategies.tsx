@@ -5,32 +5,32 @@ const MitigationStrategies = () => {
   const strategies = [
     {
       id: 1,
-      title: "Adjust Order Timing",
-      description: "Consider placing larger orders before new tariffs take effect to lock in current rates.",
+      title: "Adjust Retail Pricing",
+      description: "Increase mug retail price by $0.15 per sale to offset the $1.60 cost increase. Customer impact is minimal while protecting margins.",
       priority: "High",
     },
     {
       id: 2,
-      title: "Review Supplier Contracts",
-      description: "Check if contracts include provisions for tariff changes and negotiate shared responsibilities.",
+      title: "Negotiate Bulk Ordering",
+      description: "Contact your China supplier about volume discounts. Ordering 1,000 mugs quarterly instead of 500 monthly could save 8-12%.",
       priority: "High",
     },
     {
       id: 3,
-      title: "Explore Duty Drawback",
-      description: "You may be eligible for duty refunds on exported goods. Research available programs.",
+      title: "Diversify Mug Suppliers",
+      description: "Explore alternative suppliers in Vietnam or Mexico where tariff rates may be lower. Could reduce per-unit costs by 15-20%.",
       priority: "Medium",
     },
     {
       id: 4,
-      title: "Inventory Planning",
-      description: "Build strategic inventory levels to buffer against short-term cost fluctuations.",
+      title: "Stock Up Before Next Increase",
+      description: "Build 3-month inventory of mugs now at current rates. This buffers you against further tariff escalation rumors.",
       priority: "Medium",
     },
     {
       id: 5,
-      title: "Product Reclassification",
-      description: "Work with a customs broker to ensure your products are classified optimally.",
+      title: "Product Mix Adjustment",
+      description: "Consider glass or bamboo mug alternatives (different HS codes) with lower tariff rates as complementary product lines.",
       priority: "Low",
     },
   ];

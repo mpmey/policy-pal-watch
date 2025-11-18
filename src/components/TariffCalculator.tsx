@@ -6,9 +6,9 @@ import { Slider } from "@/components/ui/slider";
 import { Calculator } from "lucide-react";
 
 const TariffCalculator = () => {
-  const [productValue, setProductValue] = useState(10000);
-  const [currentTariff, setCurrentTariff] = useState(5);
-  const [newTariff, setNewTariff] = useState(15);
+  const [productValue, setProductValue] = useState(4.00);
+  const [currentTariff, setCurrentTariff] = useState(10);
+  const [newTariff, setNewTariff] = useState(25);
 
   const currentCost = productValue * (currentTariff / 100);
   const newCost = productValue * (newTariff / 100);
@@ -22,18 +22,20 @@ const TariffCalculator = () => {
           <Calculator className="w-5 h-5 text-primary" />
           Tariff Impact Calculator
         </CardTitle>
-        <CardDescription>See how tariff changes affect your costs</CardDescription>
+        <CardDescription>Ceramic Mugs (HS 6912.00) - See how tariff changes affect your costs</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="productValue">Product Value (USD)</Label>
+          <Label htmlFor="productValue">Wholesale Cost Per Mug ($)</Label>
           <Input
             id="productValue"
             type="number"
             value={productValue}
             onChange={(e) => setProductValue(Number(e.target.value))}
             min={0}
+            step="0.01"
           />
+          <p className="text-xs text-muted-foreground">Base wholesale cost from supplier (before tariffs)</p>
         </div>
 
         <div className="space-y-4">

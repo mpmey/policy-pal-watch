@@ -6,25 +6,25 @@ const PolicyAlerts = () => {
   const alerts = [
     {
       id: 1,
-      title: "US Tariff Update on Electronics",
-      description: "New tariff rates proposed for HS code 8517.12 (smartphones). Potential 10-15% increase expected.",
-      impact: "Medium",
+      title: "U.S. Tariff Increase on Ceramic Mugs",
+      description: "New tariff rates for HS code 6912.00 (ceramic tableware) increased from 10% → 25%. Affects your imported mugs from China. Your cost per mug will rise from $4.00 to $5.60.",
+      impact: "High",
       date: "2 hours ago",
       category: "Tariffs",
     },
     {
       id: 2,
-      title: "Canada Trade Agreement Amendment",
-      description: "CUSMA provisions updated for textile imports. Review your textile product classifications.",
-      impact: "Low",
+      title: "Colombian Coffee Bean Trade Update",
+      description: "Good news! Tariff-free status maintained for HS code 0901.11.00 (coffee beans) from Colombia under current trade agreements.",
+      impact: "Positive",
       date: "1 day ago",
       category: "Trade Agreement",
     },
     {
       id: 3,
-      title: "Duty Drawback Program Extended",
-      description: "Good news! The duty drawback program has been extended through 2025 with expanded eligibility.",
-      impact: "Positive",
+      title: "Espresso Machine Parts Duty Review",
+      description: "CBP reviewing classification for HS code 8413.91 (pump parts). Potential reclassification could reduce duty rates for your espresso machine components.",
+      impact: "Low",
       date: "3 days ago",
       category: "Opportunity",
     },
@@ -49,8 +49,9 @@ const PolicyAlerts = () => {
               <h4 className="font-semibold text-foreground">{alert.title}</h4>
               <Badge
                 variant={
-                  alert.impact === "Medium" ? "secondary" :
-                  alert.impact === "Positive" ? "default" : "outline"
+                  alert.impact === "High" ? "destructive" :
+                  alert.impact === "Positive" ? "default" : 
+                  alert.impact === "Medium" ? "secondary" : "outline"
                 }
               >
                 {alert.impact}

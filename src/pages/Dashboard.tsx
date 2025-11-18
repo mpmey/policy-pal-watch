@@ -11,9 +11,12 @@ const Dashboard = () => {
     <div className="min-h-screen bg-gradient-to-b from-background to-card">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2 text-foreground">Your Policy Dashboard</h1>
+          <div className="flex items-center gap-3 mb-2">
+            <h1 className="text-4xl font-bold text-foreground">Prairie Grounds Coffee</h1>
+            <Badge variant="outline" className="text-sm">Calgary, AB</Badge>
+          </div>
           <p className="text-muted-foreground">
-            Stay informed about changes that matter to your business
+            Importing coffee beans, ceramic mugs, and espresso machine parts
           </p>
         </div>
 
@@ -35,10 +38,10 @@ const Dashboard = () => {
           />
           <StatCard
             icon={<DollarSign className="w-5 h-5" />}
-            label="Potential Impact"
-            value="$2.4K"
-            trend="Based on current rates"
-            variant="default"
+            label="Monthly Impact"
+            value="$420"
+            trend="From mug tariff increase"
+            variant="warning"
           />
           <StatCard
             icon={<Shield className="w-5 h-5" />}
