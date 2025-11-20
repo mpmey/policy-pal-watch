@@ -1,19 +1,49 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calculator } from "lucide-react";
 
-const TariffCalculator = () => {
+interface Product {
+  id: string;
+  name: string;
+  hsCode: string;
+  countryOfOrigin: string;
+  costPerUnit: string;
+  unitsPerMonth: string;
+}
+
+interface TariffCalculatorProps {
+  products?: Product[];
+}
+
+const TariffCalculator = ({ products = [] }: TariffCalculatorProps) => {
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [productValue, setProductValue] = useState(4.00);
   const [currentTariff, setCurrentTariff] = useState(10);
   const [newTariff, setNewTariff] = useState(25);
 
+  // Load selected product data
+  useEffect(() => {
+    if (selectedProduct) {
+      setProductValue(parseFloat(selectedProduct.costPerUnit) || 0);
+    }
+  }, [selectedProduct]);
+
+  const handleProductSelect = (productId: string) => {
+    const product = products.find((p) => p.id === productId);
+    setSelectedProduct(product || null);
+  };
+
   const currentCost = productValue * (currentTariff / 100);
   const newCost = productValue * (newTariff / 100);
   const costIncrease = newCost - currentCost;
-  const percentIncrease = ((costIncrease / currentCost) * 100).toFixed(1);
+  const percentIncrease = currentCost > 0 ? ((costIncrease / currentCost) * 100).toFixed(1) : "0.0";
+
+  const monthlyUnits = selectedProduct ? parseFloat(selectedProduct.unitsPerMonth) : 0;
+  const monthlyImpact = costIncrease * monthlyUnits;
 
   return (
     <Card className="shadow-[var(--shadow-card)]">
@@ -22,11 +52,35 @@ const TariffCalculator = () => {
           <Calculator className="w-5 h-5 text-primary" />
           Tariff Impact Calculator
         </CardTitle>
-        <CardDescription>Ceramic Mugs (HS 6912.00) - See how tariff changes affect your costs</CardDescription>
+        <CardDescription>Calculate how tariff changes affect your product costs</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Product Selection */}
+        {products.length > 0 && (
+          <div className="space-y-2">
+            <Label htmlFor="product-select">Select a Product</Label>
+            <Select onValueChange={handleProductSelect}>
+              <SelectTrigger id="product-select">
+                <SelectValue placeholder="Choose a product or enter manually below" />
+              </SelectTrigger>
+              <SelectContent>
+                {products.map((product) => (
+                  <SelectItem key={product.id} value={product.id}>
+                    {product.name} {product.hsCode && `(HS ${product.hsCode})`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedProduct && (
+              <p className="text-xs text-muted-foreground">
+                Origin: {selectedProduct.countryOfOrigin} • {selectedProduct.unitsPerMonth} units/month
+              </p>
+            )}
+          </div>
+        )}
+
         <div className="space-y-2">
-          <Label htmlFor="productValue">Wholesale Cost Per Mug ($)</Label>
+          <Label htmlFor="productValue">Wholesale Cost Per Unit ($)</Label>
           <Input
             id="productValue"
             type="number"
@@ -73,13 +127,24 @@ const TariffCalculator = () => {
           </div>
           <div className="pt-3 border-t border-border">
             <div className="flex justify-between items-center">
-              <span className="font-medium text-foreground">Cost Increase:</span>
+              <span className="font-medium text-foreground">Per Unit Increase:</span>
               <div className="text-right">
                 <div className="font-bold text-lg text-warning">${costIncrease.toFixed(2)}</div>
                 <div className="text-xs text-muted-foreground">+{percentIncrease}%</div>
               </div>
             </div>
           </div>
+          {selectedProduct && monthlyUnits > 0 && (
+            <div className="pt-3 border-t border-border">
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-foreground">Monthly Impact:</span>
+                <div className="text-right">
+                  <div className="font-bold text-lg text-destructive">${monthlyImpact.toFixed(2)}</div>
+                  <div className="text-xs text-muted-foreground">{monthlyUnits} units/month</div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

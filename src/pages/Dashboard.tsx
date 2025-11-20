@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, TrendingUp, DollarSign, Shield, LogOut } from "lucide-react";
 import TariffCalculator from "@/components/TariffCalculator";
 import ScenarioAnalysis from "@/components/ScenarioAnalysis";
 import MitigationStrategies from "@/components/MitigationStrategies";
-import PolicyAlerts from "@/components/PolicyAlerts";
+import ProductList from "@/components/ProductList";
+import AlertCenter from "@/components/AlertCenter";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -177,6 +178,11 @@ const Dashboard = () => {
                   </Card>
                 ))}
               </div>
+
+              {/* Product List Section */}
+              <div className="mt-6">
+                <ProductList products={businessData.products} businessLocation={businessData.businessLocation} />
+              </div>
             </div>
           </>
         ) : (
@@ -229,9 +235,9 @@ const Dashboard = () => {
         {/* Main Content */}
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            <PolicyAlerts />
-            <TariffCalculator />
-            <ScenarioAnalysis />
+            <AlertCenter products={businessData?.products || []} />
+            <TariffCalculator products={businessData?.products || []} />
+            <ScenarioAnalysis products={businessData?.products || []} />
           </div>
           
           <div className="space-y-6">
