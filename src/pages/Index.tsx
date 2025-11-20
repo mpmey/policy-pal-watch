@@ -16,10 +16,10 @@ const Index = () => {
           </Link>
           <div className="flex items-center gap-4">
             <Button variant="ghost" asChild>
-              <Link to="/setup">Get Started</Link>
+              <Link to="/auth">Sign In</Link>
             </Button>
-            <Button variant="outline" asChild>
-              <Link to="/dashboard">Dashboard</Link>
+            <Button variant="default" asChild>
+              <Link to="/auth">Get Started</Link>
             </Button>
           </div>
         </div>
@@ -47,7 +47,7 @@ const Index = () => {
             <Button 
               size="lg" 
               className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
-              onClick={() => navigate("/setup")}
+              onClick={() => navigate("/auth")}
             >
               Get Started Free
               <ArrowRight className="ml-2 w-5 h-5" />

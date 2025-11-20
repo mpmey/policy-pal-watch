@@ -3,11 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, TrendingUp, DollarSign, Shield } from "lucide-react";
+import { AlertCircle, TrendingUp, DollarSign, Shield, LogOut } from "lucide-react";
 import TariffCalculator from "@/components/TariffCalculator";
 import ScenarioAnalysis from "@/components/ScenarioAnalysis";
 import MitigationStrategies from "@/components/MitigationStrategies";
 import PolicyAlerts from "@/components/PolicyAlerts";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Product {
   id: string;
@@ -26,14 +28,71 @@ interface BusinessData {
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [businessData, setBusinessData] = useState<BusinessData | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedData = localStorage.getItem("businessData");
-    if (storedData) {
-      setBusinessData(JSON.parse(storedData));
-    }
-  }, []);
+    const fetchBusinessData = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          navigate("/auth");
+          return;
+        }
+
+        // Fetch company and products
+        const { data: companies, error: companyError } = await supabase
+          .from("companies")
+          .select(`
+            id,
+            name,
+            location,
+            products (
+              id,
+              name,
+              hs_code,
+              country_of_origin,
+              cost_per_unit,
+              units_per_month
+            )
+          `)
+          .eq("user_id", user.id)
+          .limit(1);
+
+        if (companyError) throw companyError;
+
+        if (companies && companies.length > 0) {
+          const company = companies[0];
+          const formattedData: BusinessData = {
+            companyName: company.name,
+            businessLocation: company.location,
+            products: (company.products as any[]).map((p: any) => ({
+              id: p.id,
+              name: p.name,
+              hsCode: p.hs_code || "",
+              countryOfOrigin: p.country_of_origin,
+              costPerUnit: p.cost_per_unit.toString(),
+              unitsPerMonth: p.units_per_month.toString(),
+            })),
+          };
+          setBusinessData(formattedData);
+        }
+      } catch (error: any) {
+        console.error("Error fetching business data:", error);
+        toast({
+          title: "Error loading data",
+          description: error.message,
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBusinessData();
+  }, [navigate, toast]);
 
   // Calculate total monthly impact from all products
   const calculateMonthlyImpact = () => {
@@ -50,7 +109,23 @@ const Dashboard = () => {
     return Math.round(total);
   };
 
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth");
+  };
+
   const monthlyImpact = calculateMonthlyImpact();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-background to-card flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-card">
@@ -65,9 +140,15 @@ const Dashboard = () => {
                     {businessData.businessLocation.charAt(0).toUpperCase() + businessData.businessLocation.slice(1)}
                   </Badge>
                 </div>
-                <Button variant="outline" onClick={() => navigate("/setup")}>
-                  Edit Profile
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => navigate("/setup")}>
+                    Edit Profile
+                  </Button>
+                  <Button variant="ghost" onClick={handleSignOut}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </Button>
+                </div>
               </div>
               <p className="text-muted-foreground">
                 {businessData.products.length === 1 

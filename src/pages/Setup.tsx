@@ -1,12 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, Plus, Trash2, Shield } from "lucide-react";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Building2, Plus, Trash2, Shield, Check, ChevronsUpDown } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 interface Product {
   id: string;
@@ -21,6 +25,13 @@ interface BusinessData {
   companyName: string;
   businessLocation: string;
   products: Product[];
+}
+
+interface ProductCatalog {
+  id: string;
+  name: string;
+  hs_code: string;
+  description: string | null;
 }
 
 const Setup = () => {
@@ -39,6 +50,26 @@ const Setup = () => {
       unitsPerMonth: "",
     },
   ]);
+  const [productCatalog, setProductCatalog] = useState<ProductCatalog[]>([]);
+  const [openPopovers, setOpenPopovers] = useState<{ [key: string]: boolean }>({});
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchProductCatalog = async () => {
+      const { data, error } = await supabase
+        .from("product_catalog")
+        .select("*")
+        .order("name");
+      
+      if (error) {
+        console.error("Error fetching product catalog:", error);
+      } else {
+        setProductCatalog(data || []);
+      }
+    };
+
+    fetchProductCatalog();
+  }, []);
 
   const handleAddProduct = () => {
     const newProduct: Product = {
@@ -64,7 +95,16 @@ const Setup = () => {
     ));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleProductSelect = (productId: string, catalogItem: ProductCatalog) => {
+    setProducts(products.map(p => 
+      p.id === productId 
+        ? { ...p, name: catalogItem.name, hsCode: catalogItem.hs_code } 
+        : p
+    ));
+    setOpenPopovers({ ...openPopovers, [productId]: false });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validate
@@ -88,22 +128,93 @@ const Setup = () => {
       return;
     }
 
-    // Save to localStorage
-    const businessData: BusinessData = {
-      companyName,
-      businessLocation,
-      products: validProducts,
-    };
-    localStorage.setItem("businessData", JSON.stringify(businessData));
+    setLoading(true);
 
-    toast({
-      title: "Business Setup Complete! 🎉",
-      description: `Your profile for ${companyName} has been created successfully.`,
-    });
-    
-    setTimeout(() => {
-      navigate("/dashboard");
-    }, 1000);
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
+      // Check if company already exists for this user
+      const { data: existingCompanies } = await supabase
+        .from("companies")
+        .select("id")
+        .eq("user_id", user.id)
+        .limit(1);
+
+      let companyId: string;
+
+      if (existingCompanies && existingCompanies.length > 0) {
+        // Update existing company
+        companyId = existingCompanies[0].id;
+        const { error: updateError } = await supabase
+          .from("companies")
+          .update({
+            name: companyName,
+            location: businessLocation,
+          })
+          .eq("id", companyId);
+
+        if (updateError) throw updateError;
+
+        // Delete existing products
+        await supabase
+          .from("products")
+          .delete()
+          .eq("company_id", companyId);
+      } else {
+        // Create new company
+        const { data: newCompany, error: companyError } = await supabase
+          .from("companies")
+          .insert({
+            user_id: user.id,
+            name: companyName,
+            location: businessLocation,
+          })
+          .select()
+          .single();
+
+        if (companyError) throw companyError;
+        companyId = newCompany.id;
+      }
+
+      // Insert products
+      const productsToInsert = validProducts.map(p => ({
+        company_id: companyId,
+        name: p.name,
+        hs_code: p.hsCode || null,
+        country_of_origin: p.countryOfOrigin,
+        cost_per_unit: parseFloat(p.costPerUnit),
+        units_per_month: parseInt(p.unitsPerMonth),
+      }));
+
+      const { error: productsError } = await supabase
+        .from("products")
+        .insert(productsToInsert);
+
+      if (productsError) throw productsError;
+
+      toast({
+        title: "Business Setup Complete! 🎉",
+        description: `Your profile for ${companyName} has been created successfully.`,
+      });
+      
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 1000);
+    } catch (error: any) {
+      console.error("Error saving business data:", error);
+      toast({
+        title: "Error saving data",
+        description: error.message || "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -216,13 +327,71 @@ const Setup = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor={`name-${product.id}`}>Product Name</Label>
-                      <Input
-                        id={`name-${product.id}`}
-                        placeholder="e.g., Coffee beans"
-                        value={product.name}
-                        onChange={(e) => handleProductChange(product.id, "name", e.target.value)}
-                        required
-                      />
+                      <Popover 
+                        open={openPopovers[product.id] || false} 
+                        onOpenChange={(open) => setOpenPopovers({ ...openPopovers, [product.id]: open })}
+                      >
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            className={cn(
+                              "w-full justify-between font-normal",
+                              !product.name && "text-muted-foreground"
+                            )}
+                          >
+                            {product.name || "Search products..."}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0" align="start">
+                          <Command>
+                            <CommandInput 
+                              placeholder="Search products..." 
+                              value={product.name}
+                              onValueChange={(value) => handleProductChange(product.id, "name", value)}
+                            />
+                            <CommandList>
+                              <CommandEmpty>
+                                {product.name ? (
+                                  <div className="p-2">
+                                    <p className="text-sm text-muted-foreground mb-2">No match found. Custom entry:</p>
+                                    <p className="text-sm font-medium">{product.name}</p>
+                                  </div>
+                                ) : (
+                                  "Start typing to search..."
+                                )}
+                              </CommandEmpty>
+                              <CommandGroup>
+                                {productCatalog
+                                  .filter(item => 
+                                    item.name.toLowerCase().includes(product.name.toLowerCase())
+                                  )
+                                  .map((item) => (
+                                    <CommandItem
+                                      key={item.id}
+                                      value={item.name}
+                                      onSelect={() => handleProductSelect(product.id, item)}
+                                    >
+                                      <Check
+                                        className={cn(
+                                          "mr-2 h-4 w-4",
+                                          product.name === item.name ? "opacity-100" : "opacity-0"
+                                        )}
+                                      />
+                                      <div className="flex flex-col">
+                                        <span className="font-medium">{item.name}</span>
+                                        <span className="text-xs text-muted-foreground">
+                                          HS Code: {item.hs_code}
+                                        </span>
+                                      </div>
+                                    </CommandItem>
+                                  ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                     </div>
 
                     <div className="space-y-2">
@@ -300,8 +469,8 @@ const Setup = () => {
           </Card>
 
           {/* Submit Button */}
-          <Button type="submit" className="w-full" size="lg">
-            Generate My Dashboard
+          <Button type="submit" className="w-full" size="lg" disabled={loading}>
+            {loading ? "Saving..." : "Generate My Dashboard"}
           </Button>
         </form>
       </div>
