@@ -105,7 +105,7 @@ const Auth = () => {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Shield className="w-8 h-8 text-primary" />
-            <h1 className="text-3xl font-bold text-foreground">Policy Guardian</h1>
+            <h1 className="text-3xl font-bold text-foreground">TradeGuard</h1>
           </div>
           <p className="text-muted-foreground">
             Monitor tariff policies and protect your business
