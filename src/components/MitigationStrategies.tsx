@@ -1,39 +1,82 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Shield, CheckCircle2 } from "lucide-react";
 
-const MitigationStrategies = () => {
-  const strategies = [
-    {
-      id: 1,
-      title: "Adjust Retail Pricing",
-      description: "Increase mug retail price by $0.15 per sale to offset the $1.60 cost increase. Customer impact is minimal while protecting margins.",
-      priority: "High",
-    },
-    {
-      id: 2,
-      title: "Negotiate Bulk Ordering",
-      description: "Contact your China supplier about volume discounts. Ordering 1,000 mugs quarterly instead of 500 monthly could save 8-12%.",
-      priority: "High",
-    },
-    {
-      id: 3,
-      title: "Diversify Mug Suppliers",
-      description: "Explore alternative suppliers in Vietnam or Mexico where tariff rates may be lower. Could reduce per-unit costs by 15-20%.",
-      priority: "Medium",
-    },
-    {
-      id: 4,
-      title: "Stock Up Before Next Increase",
-      description: "Build 3-month inventory of mugs now at current rates. This buffers you against further tariff escalation rumors.",
-      priority: "Medium",
-    },
-    {
-      id: 5,
-      title: "Product Mix Adjustment",
-      description: "Consider glass or bamboo mug alternatives (different HS codes) with lower tariff rates as complementary product lines.",
-      priority: "Low",
-    },
-  ];
+interface MitigationStrategiesProps {
+  industry?: string;
+}
+
+const MitigationStrategies = ({ industry = "" }: MitigationStrategiesProps) => {
+  // Industry-specific strategies
+  const getStrategiesForIndustry = (ind: string) => {
+    const baseStrategies = [
+      {
+        id: 1,
+        title: "Adjust Retail Pricing",
+        description: "Increase retail prices strategically to offset increased landed costs while maintaining competitiveness.",
+        priority: "High",
+        industries: ["retail", "food-beverage", "textiles-apparel"],
+      },
+      {
+        id: 2,
+        title: "Negotiate Bulk Ordering",
+        description: "Contact suppliers about volume discounts. Ordering in larger quantities can save 8-12% on per-unit costs.",
+        priority: "High",
+        industries: ["retail", "food-beverage", "manufacturing", "electronics"],
+      },
+      {
+        id: 3,
+        title: "Diversify Supplier Base",
+        description: "Explore alternative suppliers in countries with lower tariff rates. Consider Vietnam, Mexico, or nearshoring options.",
+        priority: "Medium",
+        industries: ["retail", "manufacturing", "electronics", "textiles-apparel"],
+      },
+      {
+        id: 4,
+        title: "Stock Up Before Increases",
+        description: "Build 3-6 month inventory at current rates. This buffers you against further tariff escalation.",
+        priority: "Medium",
+        industries: ["retail", "food-beverage", "electronics"],
+      },
+      {
+        id: 5,
+        title: "Product Mix Adjustment",
+        description: "Consider alternative products with different HS codes that have lower tariff rates.",
+        priority: "Low",
+        industries: ["retail", "food-beverage"],
+      },
+      {
+        id: 6,
+        title: "Domestic Sourcing Exploration",
+        description: "Evaluate the feasibility of sourcing from domestic suppliers to avoid tariffs entirely.",
+        priority: "Medium",
+        industries: ["manufacturing", "food-beverage", "agriculture"],
+      },
+      {
+        id: 7,
+        title: "Free Trade Zone Utilization",
+        description: "Leverage free trade zones or bonded warehouses to defer or reduce tariff payments.",
+        priority: "Low",
+        industries: ["manufacturing", "electronics", "automotive"],
+      },
+      {
+        id: 8,
+        title: "Process Optimization",
+        description: "Review production and logistics processes to reduce waste and improve efficiency, offsetting increased costs.",
+        priority: "Medium",
+        industries: ["manufacturing", "automotive", "machinery"],
+      },
+    ];
+
+    // Filter strategies by industry if specified
+    if (ind) {
+      return baseStrategies.filter((s) => s.industries.includes(ind));
+    }
+    
+    // Return general strategies if no industry specified
+    return baseStrategies.slice(0, 5);
+  };
+
+  const strategies = getStrategiesForIndustry(industry);
 
   return (
     <Card className="shadow-[var(--shadow-card)]">
@@ -42,7 +85,9 @@ const MitigationStrategies = () => {
           <Shield className="w-5 h-5 text-primary" />
           Mitigation Strategies
         </CardTitle>
-        <CardDescription>Practical steps to reduce your risk</CardDescription>
+        <CardDescription>
+          {industry ? "Tailored strategies for your industry" : "Practical steps to reduce your risk"}
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         {strategies.map((strategy) => (

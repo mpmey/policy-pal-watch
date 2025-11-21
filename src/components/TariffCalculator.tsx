@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calculator } from "lucide-react";
+import { Calculator, TrendingDown, DollarSign } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface Product {
   id: string;
@@ -21,14 +21,15 @@ interface TariffCalculatorProps {
 
 const TariffCalculator = ({ products = [] }: TariffCalculatorProps) => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [productValue, setProductValue] = useState(4.00);
-  const [currentTariff, setCurrentTariff] = useState(10);
-  const [newTariff, setNewTariff] = useState(25);
+  const [wholesaleCost, setWholesaleCost] = useState("");
+  const [pricingMode, setPricingMode] = useState<"margin" | "retail">("margin");
+  const [targetMargin, setTargetMargin] = useState("40");
+  const [retailPrice, setRetailPrice] = useState("");
+  const [tariffRate, setTariffRate] = useState("15");
 
-  // Load selected product data
   useEffect(() => {
     if (selectedProduct) {
-      setProductValue(parseFloat(selectedProduct.costPerUnit) || 0);
+      setWholesaleCost(selectedProduct.costPerUnit);
     }
   }, [selectedProduct]);
 
@@ -37,31 +38,49 @@ const TariffCalculator = ({ products = [] }: TariffCalculatorProps) => {
     setSelectedProduct(product || null);
   };
 
-  const currentCost = productValue * (currentTariff / 100);
-  const newCost = productValue * (newTariff / 100);
-  const costIncrease = newCost - currentCost;
-  const percentIncrease = currentCost > 0 ? ((costIncrease / currentCost) * 100).toFixed(1) : "0.0";
+  const wholesale = parseFloat(wholesaleCost) || 0;
+  const tariff = parseFloat(tariffRate) || 0;
+  const landedCost = wholesale * (1 + tariff / 100);
+  
+  let currentRetailPrice = 0;
+  let currentMargin = 0;
+  let retailNeededForMargin = 0;
+  let breakEvenPrice = 0;
 
-  const monthlyUnits = selectedProduct ? parseFloat(selectedProduct.unitsPerMonth) : 0;
-  const monthlyImpact = costIncrease * monthlyUnits;
+  if (pricingMode === "margin") {
+    const margin = parseFloat(targetMargin) || 0;
+    retailNeededForMargin = landedCost / (1 - margin / 100);
+    currentRetailPrice = retailNeededForMargin;
+    currentMargin = margin;
+    breakEvenPrice = landedCost;
+  } else {
+    currentRetailPrice = parseFloat(retailPrice) || 0;
+    if (currentRetailPrice > 0) {
+      currentMargin = ((currentRetailPrice - landedCost) / currentRetailPrice) * 100;
+      retailNeededForMargin = currentRetailPrice;
+      breakEvenPrice = landedCost;
+    }
+  }
 
   return (
     <Card className="shadow-[var(--shadow-card)]">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Calculator className="w-5 h-5 text-primary" />
-          Tariff Impact Calculator
+          Profit Margin Calculator
         </CardTitle>
-        <CardDescription>Calculate how tariff changes affect your product costs</CardDescription>
+        <CardDescription>
+          Calculate how tariffs affect your margins and pricing
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Product Selection */}
         {products.length > 0 && (
           <div className="space-y-2">
-            <Label htmlFor="product-select">Select a Product</Label>
+            <Label htmlFor="calc-product">Select a Product</Label>
             <Select onValueChange={handleProductSelect}>
-              <SelectTrigger id="product-select">
-                <SelectValue placeholder="Choose a product or enter manually below" />
+              <SelectTrigger id="calc-product">
+                <SelectValue placeholder="Choose a product" />
               </SelectTrigger>
               <SelectContent>
                 {products.map((product) => (
@@ -71,76 +90,125 @@ const TariffCalculator = ({ products = [] }: TariffCalculatorProps) => {
                 ))}
               </SelectContent>
             </Select>
-            {selectedProduct && (
-              <p className="text-xs text-muted-foreground">
-                Origin: {selectedProduct.countryOfOrigin} • {selectedProduct.unitsPerMonth} units/month
-              </p>
-            )}
           </div>
         )}
 
-        <div className="space-y-2">
-          <Label htmlFor="productValue">Wholesale Cost Per Unit ($)</Label>
-          <Input
-            id="productValue"
-            type="number"
-            value={productValue}
-            onChange={(e) => setProductValue(Number(e.target.value))}
-            min={0}
-            step="0.01"
-          />
-          <p className="text-xs text-muted-foreground">Base wholesale cost from supplier (before tariffs)</p>
-        </div>
-
-        <div className="space-y-4">
+        {/* Inputs Section */}
+        <div className="grid md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label>Current Tariff Rate: {currentTariff}%</Label>
-            <Slider
-              value={[currentTariff]}
-              onValueChange={(value) => setCurrentTariff(value[0])}
-              max={50}
-              step={0.5}
-              className="w-full"
+            <Label htmlFor="wholesale-cost">Wholesale Cost ($)</Label>
+            <Input
+              id="wholesale-cost"
+              type="number"
+              step="0.01"
+              placeholder="e.g., 10.00"
+              value={wholesaleCost}
+              onChange={(e) => setWholesaleCost(e.target.value)}
             />
           </div>
 
           <div className="space-y-2">
-            <Label>New Tariff Rate: {newTariff}%</Label>
-            <Slider
-              value={[newTariff]}
-              onValueChange={(value) => setNewTariff(value[0])}
-              max={50}
-              step={0.5}
-              className="w-full"
+            <Label htmlFor="tariff-rate">Tariff Rate (%)</Label>
+            <Input
+              id="tariff-rate"
+              type="number"
+              step="0.1"
+              placeholder="e.g., 15"
+              value={tariffRate}
+              onChange={(e) => setTariffRate(e.target.value)}
             />
           </div>
         </div>
 
-        <div className="bg-muted/50 rounded-lg p-4 space-y-3">
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Current Tariff Cost:</span>
-            <span className="font-semibold text-foreground">${currentCost.toFixed(2)}</span>
+        {/* Pricing Mode Selection */}
+        <div className="space-y-3">
+          <Label>Pricing Strategy</Label>
+          <RadioGroup value={pricingMode} onValueChange={(value) => setPricingMode(value as "margin" | "retail")}>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="margin" id="margin-mode" />
+              <Label htmlFor="margin-mode" className="font-normal cursor-pointer">
+                Set Target Profit Margin (%)
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="retail" id="retail-mode" />
+              <Label htmlFor="retail-mode" className="font-normal cursor-pointer">
+                Set Retail Price ($)
+              </Label>
+            </div>
+          </RadioGroup>
+        </div>
+
+        {pricingMode === "margin" ? (
+          <div className="space-y-2">
+            <Label htmlFor="target-margin">Target Profit Margin (%)</Label>
+            <Input
+              id="target-margin"
+              type="number"
+              step="0.1"
+              placeholder="e.g., 40"
+              value={targetMargin}
+              onChange={(e) => setTargetMargin(e.target.value)}
+            />
           </div>
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">New Tariff Cost:</span>
-            <span className="font-semibold text-foreground">${newCost.toFixed(2)}</span>
+        ) : (
+          <div className="space-y-2">
+            <Label htmlFor="retail-price">Retail Price ($)</Label>
+            <Input
+              id="retail-price"
+              type="number"
+              step="0.01"
+              placeholder="e.g., 25.00"
+              value={retailPrice}
+              onChange={(e) => setRetailPrice(e.target.value)}
+            />
           </div>
-          <div className="pt-3 border-t border-border">
-            <div className="flex justify-between items-center">
-              <span className="font-medium text-foreground">Per Unit Increase:</span>
-              <div className="text-right">
-                <div className="font-bold text-lg text-warning">${costIncrease.toFixed(2)}</div>
-                <div className="text-xs text-muted-foreground">+{percentIncrease}%</div>
-              </div>
+        )}
+
+        {/* Results Section */}
+        <div className="border-t border-border pt-4 space-y-4">
+          <h4 className="font-semibold text-foreground">Calculation Results</h4>
+          
+          <div className="grid gap-3">
+            <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+              <span className="text-sm text-muted-foreground">Total Landed Cost (with tariff)</span>
+              <span className="font-bold text-foreground">${landedCost.toFixed(2)}</span>
+            </div>
+
+            <div className="flex justify-between items-center p-3 bg-primary/10 rounded-lg">
+              <span className="text-sm text-foreground">Current Profit Margin</span>
+              <span className="font-bold text-primary">{currentMargin.toFixed(1)}%</span>
+            </div>
+
+            <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+              <span className="text-sm text-muted-foreground">
+                {pricingMode === "margin" ? "Required Retail Price" : "Your Retail Price"}
+              </span>
+              <span className="font-bold text-foreground">${currentRetailPrice.toFixed(2)}</span>
+            </div>
+
+            <div className="flex justify-between items-center p-3 bg-warning/10 rounded-lg">
+              <span className="text-sm text-warning-foreground flex items-center gap-1">
+                <TrendingDown className="w-4 h-4" />
+                Break-Even Price
+              </span>
+              <span className="font-bold text-warning">${breakEvenPrice.toFixed(2)}</span>
             </div>
           </div>
-          {selectedProduct && monthlyUnits > 0 && (
-            <div className="pt-3 border-t border-border">
-              <div className="flex justify-between items-center">
-                <span className="font-medium text-foreground">Monthly Impact:</span>
-                <div className="text-right">
-                  <div className="font-bold text-lg text-destructive">${monthlyImpact.toFixed(2)}</div>
-                  <div className="text-xs text-muted-foreground">{monthlyUnits} units/month</div>
+
+          {selectedProduct && (
+            <div className="mt-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+              <div className="flex items-start gap-2">
+                <DollarSign className="w-4 h-4 text-primary mt-0.5" />
+                <div className="text-xs text-muted-foreground">
+                  <p className="font-medium text-foreground mb-1">Monthly Impact</p>
+                  <p>
+                    Based on {selectedProduct.unitsPerMonth} units/month: 
+                    <span className="font-semibold text-foreground ml-1">
+                      ${((landedCost - wholesale) * parseFloat(selectedProduct.unitsPerMonth)).toFixed(2)}
+                    </span>
+                    {" "}additional cost from tariff
+                  </p>
                 </div>
               </div>
             </div>
