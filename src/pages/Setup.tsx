@@ -24,6 +24,7 @@ interface Product {
 interface BusinessData {
   companyName: string;
   businessLocation: string;
+  industry: string;
   products: Product[];
 }
 
@@ -40,6 +41,7 @@ const Setup = () => {
   
   const [companyName, setCompanyName] = useState("");
   const [businessLocation, setBusinessLocation] = useState("canada");
+  const [industry, setIndustry] = useState("");
   const [products, setProducts] = useState<Product[]>([
     {
       id: "1",
@@ -117,6 +119,15 @@ const Setup = () => {
       return;
     }
 
+    if (!industry) {
+      toast({
+        title: "Industry required",
+        description: "Please select your business industry",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const validProducts = products.filter(p => p.name.trim() && p.costPerUnit && p.unitsPerMonth);
     
     if (validProducts.length === 0) {
@@ -155,6 +166,7 @@ const Setup = () => {
           .update({
             name: companyName,
             location: businessLocation,
+            industry: industry,
           })
           .eq("id", companyId);
 
@@ -173,6 +185,7 @@ const Setup = () => {
             user_id: user.id,
             name: companyName,
             location: businessLocation,
+            industry: industry,
           })
           .select()
           .single();
@@ -224,7 +237,7 @@ const Setup = () => {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link to="/" className="text-xl font-bold text-primary flex items-center gap-2">
             <Shield className="w-6 h-6" />
-            Policy Guardian
+            TradeGuard
           </Link>
           <div className="flex items-center gap-4">
             <Button variant="ghost" asChild>
@@ -270,7 +283,7 @@ const Setup = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="businessLocation">Business Location</Label>
+                <Label htmlFor="businessLocation">Business Location (Importing To)</Label>
                 <Select
                   value={businessLocation}
                   onValueChange={setBusinessLocation}
@@ -289,6 +302,30 @@ const Setup = () => {
                     <SelectItem value="spain">Spain</SelectItem>
                     <SelectItem value="australia">Australia</SelectItem>
                     <SelectItem value="japan">Japan</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="industry">Industry</Label>
+                <Select
+                  value={industry}
+                  onValueChange={setIndustry}
+                  required
+                >
+                  <SelectTrigger id="industry">
+                    <SelectValue placeholder="Select your industry" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="retail">Retail</SelectItem>
+                    <SelectItem value="food-beverage">Food & Beverage</SelectItem>
+                    <SelectItem value="manufacturing">Manufacturing</SelectItem>
+                    <SelectItem value="electronics">Electronics</SelectItem>
+                    <SelectItem value="textiles-apparel">Textiles & Apparel</SelectItem>
+                    <SelectItem value="automotive">Automotive</SelectItem>
+                    <SelectItem value="agriculture">Agriculture</SelectItem>
+                    <SelectItem value="chemicals">Chemicals</SelectItem>
+                    <SelectItem value="machinery">Machinery</SelectItem>
                     <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
@@ -429,7 +466,7 @@ const Setup = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor={`cost-${product.id}`}>Current Cost per Unit ($)</Label>
+                      <Label htmlFor={`cost-${product.id}`}>Wholesale Cost per Unit ($)</Label>
                       <Input
                         id={`cost-${product.id}`}
                         type="number"

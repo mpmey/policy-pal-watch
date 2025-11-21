@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Bell, Clock, AlertTriangle, Info, AlertCircle } from "lucide-react";
 
 interface Alert {
@@ -9,38 +10,61 @@ interface Alert {
   severity: "info" | "warning" | "critical";
   timestamp: string;
   relatedProducts: string[];
+  industry: string[];
 }
 
 interface AlertCenterProps {
   products?: { id: string; name: string }[];
+  industry?: string;
 }
 
-const AlertCenter = ({ products = [] }: AlertCenterProps) => {
+const AlertCenter = ({ products = [], industry = "" }: AlertCenterProps) => {
   // Mock alerts - in a real app, these would come from the backend
-  const alerts: Alert[] = [
+  const allAlerts: Alert[] = [
     {
       id: 1,
       title: "Critical: U.S. Tariff Increase on Chinese Imports",
       description: "Tariff rates for HS code 6912.00 (ceramic tableware) increased from 10% to 25%. Immediate impact on product pricing expected.",
       severity: "critical",
       timestamp: "2 hours ago",
-      relatedProducts: products.filter(p => p.name.toLowerCase().includes("mug")).map(p => p.name),
+      relatedProducts: ["mug", "ceramic", "tableware"],
+      industry: ["retail", "food-beverage"],
     },
     {
       id: 2,
-      title: "Warning: Potential Policy Change",
-      description: "Proposed trade policy changes may affect imports from China. Review scheduled for next month.",
+      title: "Warning: Proposed Tariff Changes for Electronics",
+      description: "Proposed 15% tariff on electronic components from China. Public comment period open until next month.",
       severity: "warning",
       timestamp: "1 day ago",
-      relatedProducts: products.filter(p => p.name.toLowerCase().includes("china")).map(p => p.name),
+      relatedProducts: ["electronics", "components", "parts"],
+      industry: ["electronics", "manufacturing"],
     },
     {
       id: 3,
-      title: "Info: Trade Agreement Update",
+      title: "Info: Trade Agreement Update - Coffee Imports",
       description: "Tariff-free status maintained for coffee beans from Colombia under current trade agreements.",
       severity: "info",
       timestamp: "3 days ago",
-      relatedProducts: products.filter(p => p.name.toLowerCase().includes("coffee")).map(p => p.name),
+      relatedProducts: ["coffee", "beans"],
+      industry: ["food-beverage", "retail"],
+    },
+    {
+      id: 4,
+      title: "Warning: Textile Tariff Review Scheduled",
+      description: "Department of Commerce to review tariff rates on textile imports from Vietnam. Changes expected in Q2.",
+      severity: "warning",
+      timestamp: "5 days ago",
+      relatedProducts: ["textile", "fabric", "clothing"],
+      industry: ["textiles-apparel", "retail"],
+    },
+    {
+      id: 5,
+      title: "Critical: Steel and Aluminum Tariff Increase",
+      description: "Section 232 tariffs increased to 35% on steel and aluminum imports. Affects manufacturing and automotive sectors.",
+      severity: "critical",
+      timestamp: "1 week ago",
+      relatedProducts: ["steel", "aluminum", "metal"],
+      industry: ["manufacturing", "automotive", "machinery"],
     },
   ];
 
@@ -83,6 +107,30 @@ const AlertCenter = ({ products = [] }: AlertCenterProps) => {
     }
   };
 
+  // Filter alerts by industry and products
+  const filteredAlerts = allAlerts.filter((alert) => {
+    // Filter by industry
+    if (industry && alert.industry.length > 0 && !alert.industry.includes(industry)) {
+      return false;
+    }
+
+    // Filter by products - check if any product name matches alert's related products
+    if (products.length > 0) {
+      const hasRelatedProduct = products.some((product) =>
+        alert.relatedProducts.some((relatedProduct) =>
+          product.name.toLowerCase().includes(relatedProduct.toLowerCase())
+        )
+      );
+      // If we have products but none match, still show industry alerts
+      if (!hasRelatedProduct && alert.industry.includes(industry)) {
+        return true;
+      }
+      return hasRelatedProduct;
+    }
+
+    return true;
+  });
+
   return (
     <Card className="shadow-[var(--shadow-card)]">
       <CardHeader>
@@ -91,51 +139,75 @@ const AlertCenter = ({ products = [] }: AlertCenterProps) => {
           Alert Center
         </CardTitle>
         <CardDescription>
-          {alerts.length} active {alerts.length === 1 ? "alert" : "alerts"}
+          {filteredAlerts.length} {filteredAlerts.length === 1 ? "alert" : "alerts"} relevant to your business
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
-        {alerts.map((alert) => (
-          <div
-            key={alert.id}
-            className={`p-4 rounded-lg border transition-all hover:shadow-md ${getSeverityColor(alert.severity)}`}
-          >
-            <div className="flex items-start justify-between mb-2">
-              <div className="flex items-start gap-3 flex-1">
-                {getSeverityIcon(alert.severity)}
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-semibold text-foreground">{alert.title}</h4>
-                    <Badge variant={getSeverityBadgeVariant(alert.severity)} className="text-xs">
-                      {alert.severity.toUpperCase()}
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-3">{alert.description}</p>
-                  
-                  {/* Related Products */}
-                  {alert.relatedProducts.length > 0 && (
-                    <div className="mb-2">
-                      <p className="text-xs text-muted-foreground mb-1">Related Products:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {alert.relatedProducts.map((product, idx) => (
-                          <Badge key={idx} variant="outline" className="text-xs">
-                            {product}
-                          </Badge>
-                        ))}
+        {filteredAlerts.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <Bell className="w-12 h-12 mx-auto mb-3 opacity-50" />
+            <p>No active alerts for your industry and products</p>
+          </div>
+        ) : (
+          filteredAlerts.map((alert) => {
+            const affectedProducts = products.filter((product) =>
+              alert.relatedProducts.some((relatedProduct) =>
+                product.name.toLowerCase().includes(relatedProduct.toLowerCase())
+              )
+            );
+
+            return (
+              <div
+                key={alert.id}
+                className={`p-4 rounded-lg border transition-all hover:shadow-md ${getSeverityColor(alert.severity)}`}
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-start gap-3 flex-1">
+                    {getSeverityIcon(alert.severity)}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-semibold text-foreground">{alert.title}</h4>
+                        <Badge variant={getSeverityBadgeVariant(alert.severity)} className="text-xs">
+                          {alert.severity.toUpperCase()}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-3">{alert.description}</p>
+                      
+                      {/* Related Products */}
+                      {affectedProducts.length > 0 && (
+                        <div className="mb-2">
+                          <p className="text-xs text-muted-foreground mb-1">Affected Products:</p>
+                          <div className="flex flex-wrap gap-1">
+                            {affectedProducts.map((product, idx) => (
+                              <Badge key={idx} variant="outline" className="text-xs">
+                                {product.name}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between mt-3">
+                        {/* Timestamp */}
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Clock className="w-3 h-3" />
+                          {alert.timestamp}
+                        </div>
+
+                        {/* View Impact Button */}
+                        {affectedProducts.length > 0 && (
+                          <Button variant="link" size="sm" className="h-auto p-0 text-xs">
+                            View Impact →
+                          </Button>
+                        )}
                       </div>
                     </div>
-                  )}
-
-                  {/* Timestamp */}
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Clock className="w-3 h-3" />
-                    {alert.timestamp}
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        ))}
+            );
+          })
+        )}
       </CardContent>
     </Card>
   );

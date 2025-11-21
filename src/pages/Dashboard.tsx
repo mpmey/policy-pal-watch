@@ -24,6 +24,7 @@ interface Product {
 interface BusinessData {
   companyName: string;
   businessLocation: string;
+  industry: string;
   products: Product[];
 }
 
@@ -50,6 +51,7 @@ const Dashboard = () => {
             id,
             name,
             location,
+            industry,
             products (
               id,
               name,
@@ -69,6 +71,7 @@ const Dashboard = () => {
           const formattedData: BusinessData = {
             companyName: company.name,
             businessLocation: company.location,
+            industry: company.industry || "",
             products: (company.products as any[]).map((p: any) => ({
               id: p.id,
               name: p.name,
@@ -134,12 +137,10 @@ const Dashboard = () => {
         {businessData ? (
           <>
             <div className="mb-8">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-3">
-                  <h1 className="text-4xl font-bold text-foreground">{businessData.companyName}</h1>
-                  <Badge variant="outline" className="text-sm">
-                    {businessData.businessLocation.charAt(0).toUpperCase() + businessData.businessLocation.slice(1)}
-                  </Badge>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h1 className="text-3xl font-bold text-primary mb-1">TradeGuard</h1>
+                  <p className="text-xl text-foreground">{businessData.companyName}</p>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={() => navigate("/setup")}>
@@ -151,33 +152,6 @@ const Dashboard = () => {
                   </Button>
                 </div>
               </div>
-              <p className="text-muted-foreground">
-                {businessData.products.length === 1 
-                  ? `Importing ${businessData.products[0].name}`
-                  : `Importing ${businessData.products.map(p => p.name).join(", ")}`}
-              </p>
-
-              {/* Product Details */}
-              <div className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                {businessData.products.map((product) => (
-                  <Card key={product.id} className="shadow-[var(--shadow-card)]">
-                    <CardContent className="pt-6">
-                      <h3 className="font-semibold text-foreground mb-2">{product.name}</h3>
-                      <div className="space-y-1 text-sm text-muted-foreground">
-                        {product.hsCode && <p>HS Code: {product.hsCode}</p>}
-                        {product.countryOfOrigin && (
-                          <p>Origin: {product.countryOfOrigin.charAt(0).toUpperCase() + product.countryOfOrigin.slice(1)}</p>
-                        )}
-                        <p>Cost: ${parseFloat(product.costPerUnit).toFixed(2)}/unit</p>
-                        <p>Volume: {product.unitsPerMonth} units/month</p>
-                        <p className="font-semibold text-foreground pt-2">
-                          Monthly: ${(parseFloat(product.costPerUnit) * parseFloat(product.unitsPerMonth)).toFixed(2)}
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
 
               {/* Product List Section */}
               <div className="mt-6">
@@ -187,100 +161,30 @@ const Dashboard = () => {
           </>
         ) : (
           <div className="mb-8">
-            <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-4xl font-bold text-foreground">Prairie Grounds Coffee</h1>
-              <Badge variant="outline" className="text-sm">Calgary, AB</Badge>
+            <div>
+              <h1 className="text-3xl font-bold text-primary mb-1">TradeGuard</h1>
+              <p className="text-xl text-foreground mb-4">Set Up Your Business Profile</p>
             </div>
-            <p className="text-muted-foreground mb-4">
-              Importing coffee beans, ceramic mugs, and espresso machine parts
-            </p>
             <Button onClick={() => navigate("/setup")}>
-              Set Up Your Business Profile
+              Get Started
             </Button>
           </div>
         )}
 
-        {/* Stats Overview */}
-        <div className="grid md:grid-cols-4 gap-4 mb-8">
-          <StatCard
-            icon={<AlertCircle className="w-5 h-5" />}
-            label="Active Alerts"
-            value="3"
-            trend="2 new this week"
-            variant="warning"
-          />
-          <StatCard
-            icon={<TrendingUp className="w-5 h-5" />}
-            label="Monitored Policies"
-            value="12"
-            trend="Up to date"
-            variant="success"
-          />
-          <StatCard
-            icon={<DollarSign className="w-5 h-5" />}
-            label="Monthly Impact"
-            value={`$${monthlyImpact}`}
-            trend={businessData ? "From tariff increases" : "From mug tariff increase"}
-            variant="warning"
-          />
-          <StatCard
-            icon={<Shield className="w-5 h-5" />}
-            label="Risk Level"
-            value="Low"
-            trend="Well prepared"
-            variant="success"
-          />
-        </div>
-
         {/* Main Content */}
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            <AlertCenter products={businessData?.products || []} />
+            <AlertCenter products={businessData?.products || []} industry={businessData?.industry || ""} />
             <TariffCalculator products={businessData?.products || []} />
             <ScenarioAnalysis products={businessData?.products || []} />
           </div>
           
           <div className="space-y-6">
-            <MitigationStrategies />
+            <MitigationStrategies industry={businessData?.industry || ""} />
           </div>
         </div>
       </div>
     </div>
-  );
-};
-
-const StatCard = ({ 
-  icon, 
-  label, 
-  value, 
-  trend, 
-  variant 
-}: { 
-  icon: React.ReactNode; 
-  label: string; 
-  value: string; 
-  trend: string;
-  variant: "default" | "success" | "warning";
-}) => {
-  const variantStyles = {
-    default: "bg-card",
-    success: "bg-success/10 border-success/20",
-    warning: "bg-warning/10 border-warning/20",
-  };
-
-  return (
-    <Card className={`${variantStyles[variant]} shadow-[var(--shadow-card)]`}>
-      <CardContent className="pt-6">
-        <div className="flex items-start justify-between mb-2">
-          <div className="text-muted-foreground">{icon}</div>
-          <Badge variant={variant === "success" ? "default" : variant === "warning" ? "secondary" : "outline"}>
-            {label}
-          </Badge>
-        </div>
-        <div className="text-3xl font-bold mb-1 text-foreground">{value}</div>
-        <p className="text-xs text-muted-foreground">{trend}</p>
-      </CardContent>
-    </Card>
   );
 };
 
